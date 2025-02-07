@@ -2,48 +2,48 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/OIgnacioA/Pin1-devops-mundose.git'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')  // Usar las credenciales de Docker Hub
+        IMAGE_NAME = "sehent/webapp:${env.BUILD_NUMBER}"              // Nombre de la imagen con el número de build
     }
 
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    // Clonar el repositorio desde Git
-                    git url: "${env.GIT_REPO}"
+                    // Clonar el repositorio desde GitHub
+                    git 'https://github.com/OIgnacioA/Pin1-devops-mundose.git'
                 }
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Aquí puedes ejecutar el comando de construcción que necesites, como Maven o Gradle
-                    echo 'Building the project...'
-                    // Por ejemplo, si usas Maven:
-                    // sh 'mvn clean install'
+                    // Construir la imagen Docker
+                    echo 'Building Docker image...'
+                    sh "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
 
-        stage('Run Tests') {
+        stage('Login to Docker Hub') {
             steps {
                 script {
-                    // Ejecutar pruebas unitarias o pruebas que tengas configuradas
-                    echo 'Running tests...'
-                    // Por ejemplo, si usas Maven:
-                    // sh 'mvn test'
+                    // Login a Docker Hub usando las credenciales guardadas en Jenkins
+                    echo 'Logging into Docker Hub...'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                    }
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Push Docker Image') {
             steps {
                 script {
-                    // Aquí puedes agregar tu comando de despliegue
-                    echo 'Deploying the project...'
-                    // Por ejemplo, si tienes un script de despliegue:
-                    // sh './deploy.sh'
+                    // Subir la imagen Docker a Docker Hub
+                    echo 'Pushing Docker image to Docker Hub...'
+                    sh "docker push ${IMAGE_NAME}"
                 }
             }
         }
