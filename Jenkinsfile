@@ -1,37 +1,58 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-    IMAGE_NAME = "sehent/webapp:${env.BUILD_NUMBER}"
-  }
-
-  stages {
-    stage('Building image') {
-      steps {
-        sh '''
-        docker build -t $IMAGE_NAME .
-        '''
-      }
+    environment {
+        GIT_REPO = 'https://github.com/OIgnacioA/Pin1-devops-mundose.git'
     }
 
-    stage('Run tests') {
-      steps {
-        sh "docker run $IMAGE_NAME npm test"
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    // Clonar el repositorio desde Git
+                    git url: "${env.GIT_REPO}"
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    // Aquí puedes ejecutar el comando de construcción que necesites, como Maven o Gradle
+                    echo 'Building the project...'
+                    // Por ejemplo, si usas Maven:
+                    // sh 'mvn clean install'
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    // Ejecutar pruebas unitarias o pruebas que tengas configuradas
+                    echo 'Running tests...'
+                    // Por ejemplo, si usas Maven:
+                    // sh 'mvn test'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    // Aquí puedes agregar tu comando de despliegue
+                    echo 'Deploying the project...'
+                    // Por ejemplo, si tienes un script de despliegue:
+                    // sh './deploy.sh'
+                }
+            }
+        }
     }
 
-    stage('Deploy Image') {
-      steps {
-        sh '''
-        echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
-        docker push $IMAGE_NAME
-        '''
-      }
+    post {
+        always {
+            echo 'Pipeline finished.'
+        }
     }
-  }
 }
-
-    
-  
 
